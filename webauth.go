@@ -29,6 +29,7 @@ var (
 
 const (
 	LoginSuccess    = "Logged in successfully!"
+	LogoutSuccess   = "Logged out successfully!  See you next time!"
 	RegisterSuccess = "Registered successfully!  Please login to proceed."
 )
 
@@ -40,8 +41,9 @@ func SetupSessions(authenticationKey []byte, encryptionKey []byte) {
 	store = sessions.NewCookieStore(authenticationKey, encryptionKey)
 }
 
-func RegisterPOSTEndPoints(mux *chi.Mux) {
+func RegisterEndPoints(mux *chi.Mux) {
 	mux.MethodFunc(http.MethodPost, "/login", LoginHandler)
+	mux.MethodFunc(http.MethodPost, "/logout", LogoutHandler)
 	mux.MethodFunc(http.MethodPost, "/register", RegisterHandler)
 }
 
@@ -79,6 +81,26 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(responseJSON))
 }
 
+func LogoutHandler(w http.ResponseWriter, r *http.Request) {
+	var responseJSON string
+
+	session, err := store.Get(r, "auth")
+	if err != nil {
+		responseJSON = response.Status(ErrInternalServer.Error(), response.StatusError)
+	}
+	delete(session.Values, session.Values["username"])
+
+	if err = session.Save(r, w); err != nil {
+		responseJSON = response.Status(ErrInternalServer.Error(), response.StatusError)
+	} else {
+		responseJSON = response.Status(LogoutSuccess, response.StatusSuccess)
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(responseJSON))
+}
+
 func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 	var credentials Credentials
 	var status string
@@ -98,7 +120,7 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(responseJSON))
 }
 
-func authenticate(credentials Credentials) (status string, statusType string) {
+func authenticate(credentials Credentials) (status, statusType string) {
 	dbCredentials, err := retrieveCredentialsFromDB(credentials)
 	if err != nil {
 		return ErrInvalidCredentials.Error(), response.StatusError
@@ -116,7 +138,7 @@ func authenticate(credentials Credentials) (status string, statusType string) {
 	return LoginSuccess, response.StatusSuccess
 }
 
-func register(credentials Credentials) (status string, statusType string) {
+func register(credentials Credentials) (status, statusType string) {
 	if _, err := database.FindOne(credentials); err == nil {
 		return ErrUsernameAlreadyExists.Error(), response.StatusError
 	}
