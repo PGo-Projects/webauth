@@ -25,6 +25,13 @@ var (
 	ErrInternalServer        = errors.New("We're sorry, but something just went wrong.  Please try again later.")
 	ErrInvalidCredentials    = errors.New("The username and/or password is incorrect.")
 	ErrUsernameAlreadyExists = errors.New("This username is taken already.")
+
+	SessionOptions = sessions.Options{
+		Path:     "/",
+		HttpOnly: true,
+		Secure:   true,
+		MaxAge:   0,
+	}
 )
 
 const (
@@ -156,12 +163,7 @@ func addAuthCookie(r *http.Request, w http.ResponseWriter, username string) (sta
 	}
 
 	session.Values["username"] = username
-	session.Options = &sessions.Options{
-		Path:     "/",
-		HttpOnly: true,
-		Secure:   true,
-		MaxAge:   86400 * 7,
-	}
+	session.Options = &SessionOptions
 	if err = session.Save(r, w); err != nil {
 		return ErrInternalServer.Error(), response.StatusError
 	}
