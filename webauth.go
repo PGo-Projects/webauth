@@ -14,7 +14,7 @@ import (
 type Credentials struct {
 	Username             string
 	Password             string
-	ConfirmationPassword string
+	ConfirmationPassword string `bson:"-" json:"-"`
 	Role                 string
 }
 
@@ -150,6 +150,12 @@ func register(credentials Credentials) (status, statusType string) {
 		return ErrUsernameAlreadyExists.Error(), response.StatusError
 	}
 
+	hashedPassword, err := passhash.Hash(credentials.Password)
+	if err != nil {
+		return ErrInternalServer.Error(), response.StatusError
+	}
+
+	credentials.Password = hashedPassword
 	if err := database.InsertOne(credentials); err != nil {
 		return ErrInternalServer.Error(), response.StatusError
 	}
