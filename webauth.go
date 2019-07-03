@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
+	"strconv"
 
 	"github.com/PGo-Projects/webauth/internal/passhash"
 	"github.com/PGo-Projects/webauth/internal/response"
@@ -52,6 +53,8 @@ func RegisterEndPoints(mux *chi.Mux) {
 	mux.MethodFunc(http.MethodPost, "/login", LoginHandler)
 	mux.MethodFunc(http.MethodPost, "/logout", LogoutHandler)
 	mux.MethodFunc(http.MethodPost, "/register", RegisterHandler)
+
+	mux.MethodFunc(http.MethodGet, "/is_logged_in", IsLoggedInHandler)
 }
 
 func LoginHandler(w http.ResponseWriter, r *http.Request) {
@@ -125,6 +128,26 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte(responseJSON))
+}
+
+func IsLoggedInHandler(w http.ResponseWriter, r *http.Request) {
+	loggedInState := IsLoggedIn(r)
+	responseJSON := response.General(map[string]string{
+		"isLoggedIn": strconv.FormatBool(loggedInState),
+	})
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(responseJSON))
+}
+
+func IsLoggedIn(r *http.Request) bool {
+	session, err := store.Get(r, "auth")
+	if err != nil {
+		return false
+	}
+	_, ok := session.Values["username"]
+	return ok
 }
 
 func authenticate(credentials Credentials) (status, statusType string) {
