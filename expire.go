@@ -18,7 +18,7 @@ func RefreshHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func Expiration(next http.Handler) http.Handler {
+func ExpirationMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		RefreshHandler(w, r)
 		next.ServeHTTP(w, r)
