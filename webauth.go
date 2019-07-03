@@ -72,15 +72,15 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var responseJSON string
-	if statusType == response.StatusError {
-		responseJSON = response.Status(status, statusType)
-	} else {
+	if statusType == response.StatusSuccess {
 		responseJSON = response.General(map[string]string{
 			"status":     status,
 			"statusType": statusType,
 			"username":   credentials.Username,
 			"role":       credentials.Role,
 		})
+	} else {
+		responseJSON = response.Status(status, statusType)
 	}
 
 	w.Header().Set("Content-Type", "application/json")
