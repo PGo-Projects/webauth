@@ -106,8 +106,8 @@ func LogoutHandler(w http.ResponseWriter, r *http.Request) {
 		output.DebugError(debugMode, err)
 		responseJSON = response.Status(ErrInternalServer, response.StatusError)
 	}
-	delete(session.Values, session.Values["username"])
 
+	session.Options.MaxAge = -1
 	if err = session.Save(r, w); err != nil {
 		output.DebugError(debugMode, err)
 		responseJSON = response.Status(ErrInternalServer, response.StatusError)
