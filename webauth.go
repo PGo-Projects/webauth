@@ -2,7 +2,6 @@ package webauth
 
 import (
 	"encoding/json"
-	"errors"
 	"net/http"
 	"strconv"
 
@@ -23,9 +22,6 @@ var (
 	database Database
 	store    *sessions.CookieStore
 
-	ErrInternalServer        = errors.New("We're sorry, but something just went wrong.  Please try again later.")
-	ErrInvalidCredentials    = errors.New("The username and/or password is incorrect.")
-	ErrUsernameAlreadyExists = errors.New("This username is taken already.")
 
 	SessionOptions = sessions.Options{
 		Path:     "/",
@@ -36,6 +32,10 @@ var (
 )
 
 const (
+	ErrInternalServer        = "We're sorry, but something just went wrong.  Please try again later."
+	ErrInvalidCredentials    = "The username and/or password is incorrect."
+	ErrUsernameAlreadyExists = "This username is taken already."
+
 	LoginSuccess    = "Logged in successfully!"
 	LogoutSuccess   = "Logged out successfully!  See you next time!"
 	RegisterSuccess = "Registered successfully!  Please login to proceed."
@@ -65,7 +65,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	decoder := json.NewDecoder(r.Body)
 	err := decoder.Decode(&credentials)
 	if err != nil {
-		status = ErrInternalServer.Error()
+		status = ErrInternalServer
 		statusType = response.StatusError
 	}
 
@@ -96,12 +96,12 @@ func LogoutHandler(w http.ResponseWriter, r *http.Request) {
 
 	session, err := store.Get(r, "auth")
 	if err != nil {
-		responseJSON = response.Status(ErrInternalServer.Error(), response.StatusError)
+		responseJSON = response.Status(ErrInternalServer, response.StatusError)
 	}
 	delete(session.Values, session.Values["username"])
 
 	if err = session.Save(r, w); err != nil {
-		responseJSON = response.Status(ErrInternalServer.Error(), response.StatusError)
+		responseJSON = response.Status(ErrInternalServer, response.StatusError)
 	} else {
 		responseJSON = response.Status(LogoutSuccess, response.StatusSuccess)
 	}
@@ -118,7 +118,7 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 
 	decoder := json.NewDecoder(r.Body)
 	if err := decoder.Decode(&credentials); err != nil {
-		status = ErrInternalServer.Error()
+		status = ErrInternalServer
 		statusType = response.StatusError
 	}
 
@@ -153,16 +153,16 @@ func IsLoggedIn(r *http.Request) bool {
 func authenticate(credentials Credentials) (status, statusType string) {
 	dbCredentials, err := retrieveCredentialsFromDB(credentials)
 	if err != nil {
-		return ErrInvalidCredentials.Error(), response.StatusError
+		return ErrInvalidCredentials, response.StatusError
 	}
 
 	matches, err := passhash.Verify(credentials.Password, dbCredentials.Password)
 	if err != nil {
-		return ErrInternalServer.Error(), response.StatusError
+		return ErrInternalServer, response.StatusError
 	}
 
 	if !matches {
-		return ErrInvalidCredentials.Error(), response.StatusError
+		return ErrInvalidCredentials, response.StatusError
 	}
 
 	return LoginSuccess, response.StatusSuccess
@@ -170,17 +170,17 @@ func authenticate(credentials Credentials) (status, statusType string) {
 
 func register(credentials Credentials) (status, statusType string) {
 	if _, err := database.FindOne(credentials); err == nil {
-		return ErrUsernameAlreadyExists.Error(), response.StatusError
+		return ErrUsernameAlreadyExists, response.StatusError
 	}
 
 	hashedPassword, err := passhash.Hash(credentials.Password)
 	if err != nil {
-		return ErrInternalServer.Error(), response.StatusError
+		return ErrInternalServer, response.StatusError
 	}
 
 	credentials.Password = hashedPassword
 	if err := database.InsertOne(credentials); err != nil {
-		return ErrInternalServer.Error(), response.StatusError
+		return ErrInternalServer, response.StatusError
 	}
 	return RegisterSuccess, response.StatusSuccess
 }
@@ -188,13 +188,13 @@ func register(credentials Credentials) (status, statusType string) {
 func addAuthCookie(r *http.Request, w http.ResponseWriter, username string) (status, statusType string) {
 	session, err := store.Get(r, "auth")
 	if err != nil {
-		return ErrInternalServer.Error(), response.StatusError
+		return ErrInternalServer, response.StatusError
 	}
 
 	session.Values["username"] = username
 	session.Options = &SessionOptions
 	if err = session.Save(r, w); err != nil {
-		return ErrInternalServer.Error(), response.StatusError
+		return ErrInternalServer, response.StatusError
 	}
 	return LoginSuccess, response.StatusSuccess
 }
