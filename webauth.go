@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/PGo-Projects/output"
 	"github.com/PGo-Projects/webauth/internal/passhash"
 	"github.com/PGo-Projects/webauth/internal/response"
 	"github.com/go-chi/chi"
@@ -22,6 +23,7 @@ var (
 	database Database
 	store    *sessions.CookieStore
 
+	debugMode = false
 
 	SessionOptions = sessions.Options{
 		Path:     "/",
@@ -45,6 +47,10 @@ func RegisterDatabase(db Database) {
 	database = db
 }
 
+func SetDebugMode(dm bool) {
+	debugMode = dm
+}
+
 func SetupSessions(authenticationKey []byte, encryptionKey []byte) {
 	store = sessions.NewCookieStore(authenticationKey, encryptionKey)
 }
@@ -65,6 +71,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	decoder := json.NewDecoder(r.Body)
 	err := decoder.Decode(&credentials)
 	if err != nil {
+		output.DebugError(debugMode, err)
 		status = ErrInternalServer
 		statusType = response.StatusError
 	}
@@ -96,11 +103,13 @@ func LogoutHandler(w http.ResponseWriter, r *http.Request) {
 
 	session, err := store.Get(r, "auth")
 	if err != nil {
+		output.DebugError(debugMode, err)
 		responseJSON = response.Status(ErrInternalServer, response.StatusError)
 	}
 	delete(session.Values, session.Values["username"])
 
 	if err = session.Save(r, w); err != nil {
+		output.DebugError(debugMode, err)
 		responseJSON = response.Status(ErrInternalServer, response.StatusError)
 	} else {
 		responseJSON = response.Status(LogoutSuccess, response.StatusSuccess)
@@ -118,6 +127,7 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 
 	decoder := json.NewDecoder(r.Body)
 	if err := decoder.Decode(&credentials); err != nil {
+		output.DebugError(debugMode, err)
 		status = ErrInternalServer
 		statusType = response.StatusError
 	}
@@ -144,6 +154,7 @@ func IsLoggedInHandler(w http.ResponseWriter, r *http.Request) {
 func IsLoggedIn(r *http.Request) bool {
 	session, err := store.Get(r, "auth")
 	if err != nil {
+		output.DebugError(debugMode, err)
 		return false
 	}
 	_, ok := session.Values["username"]
@@ -153,15 +164,18 @@ func IsLoggedIn(r *http.Request) bool {
 func authenticate(credentials Credentials) (status, statusType string) {
 	dbCredentials, err := retrieveCredentialsFromDB(credentials)
 	if err != nil {
+		output.DebugError(debugMode, err)
 		return ErrInvalidCredentials, response.StatusError
 	}
 
 	matches, err := passhash.Verify(credentials.Password, dbCredentials.Password)
 	if err != nil {
+		output.DebugError(debugMode, err)
 		return ErrInternalServer, response.StatusError
 	}
 
 	if !matches {
+		output.DebugString(debugMode, "The credentials don't match", output.RED)
 		return ErrInvalidCredentials, response.StatusError
 	}
 
@@ -170,16 +184,19 @@ func authenticate(credentials Credentials) (status, statusType string) {
 
 func register(credentials Credentials) (status, statusType string) {
 	if _, err := database.FindOne(credentials); err == nil {
+		output.DebugString(debugMode, "The username already exists", output.RED)
 		return ErrUsernameAlreadyExists, response.StatusError
 	}
 
 	hashedPassword, err := passhash.Hash(credentials.Password)
 	if err != nil {
+		output.DebugError(debugMode, err)
 		return ErrInternalServer, response.StatusError
 	}
 
 	credentials.Password = hashedPassword
 	if err := database.InsertOne(credentials); err != nil {
+		output.DebugError(debugMode, err)
 		return ErrInternalServer, response.StatusError
 	}
 	return RegisterSuccess, response.StatusSuccess
@@ -188,12 +205,14 @@ func register(credentials Credentials) (status, statusType string) {
 func addAuthCookie(r *http.Request, w http.ResponseWriter, username string) (status, statusType string) {
 	session, err := store.Get(r, "auth")
 	if err != nil {
+		output.DebugError(debugMode, err)
 		return ErrInternalServer, response.StatusError
 	}
 
 	session.Values["username"] = username
 	session.Options = &SessionOptions
 	if err = session.Save(r, w); err != nil {
+		output.DebugError(debugMode, err)
 		return ErrInternalServer, response.StatusError
 	}
 	return LoginSuccess, response.StatusSuccess
@@ -202,6 +221,7 @@ func addAuthCookie(r *http.Request, w http.ResponseWriter, username string) (sta
 func retrieveCredentialsFromDB(credentials Credentials) (Credentials, error) {
 	entry, err := database.FindOne(credentials)
 	if err != nil {
+		output.DebugError(debugMode, err)
 		return Credentials{}, err
 	}
 	return entry.(Credentials), nil
