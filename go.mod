@@ -3,7 +3,7 @@ module github.com/PGo-Projects/webauth
 go 1.12
 
 require (
-	github.com/PGo-Projects/output v0.0.0-20190704002005-2463a27ad2d2
+	github.com/PGo-Projects/output v0.0.0-20190705143419-89dd5f028db5
 	github.com/go-chi/chi v4.0.2+incompatible
 	github.com/gorilla/csrf v1.6.0
 	github.com/gorilla/sessions v1.1.3
