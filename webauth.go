@@ -159,7 +159,10 @@ func IsLoggedIn(r *http.Request) (string, bool) {
 		return "", false
 	}
 	username, ok := session.Values["username"]
-	return username.(string), ok
+	if ok {
+		return username.(string), ok
+	}
+	return "", false
 }
 
 func authenticate(credentials Credentials) (status, statusType string) {
