@@ -141,9 +141,10 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func IsLoggedInHandler(w http.ResponseWriter, r *http.Request) {
-	loggedInState := IsLoggedIn(r)
+	username, loggedInState := IsLoggedIn(r)
 	responseJSON := response.General(map[string]string{
 		"isLoggedIn": strconv.FormatBool(loggedInState),
+		"username":   username,
 	})
 
 	w.Header().Set("Content-Type", "application/json")
@@ -151,14 +152,14 @@ func IsLoggedInHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(responseJSON))
 }
 
-func IsLoggedIn(r *http.Request) bool {
+func IsLoggedIn(r *http.Request) (string, bool) {
 	session, err := store.Get(r, "auth")
 	if err != nil {
 		output.DebugError(debugMode, err)
-		return false
+		return "", false
 	}
-	_, ok := session.Values["username"]
-	return ok
+	username, ok := session.Values["username"]
+	return username.(string), ok
 }
 
 func authenticate(credentials Credentials) (status, statusType string) {
