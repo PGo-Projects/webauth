@@ -78,7 +78,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 
 	status, statusType = authenticate(credentials)
 	if statusType == response.StatusSuccess {
-		if err := runHooks(loginSuccessHooks, w, r); err != nil {
+		if err := runHooks(loginSuccessHooks, w, r, credentials); err != nil {
 			status = ErrInternalServer
 			statusType = response.StatusError
 		}
@@ -119,7 +119,7 @@ func LogoutHandler(w http.ResponseWriter, r *http.Request) {
 		output.DebugError(debugMode, err)
 		responseJSON = response.Status(ErrInternalServer, response.StatusError)
 	} else {
-		if err := runHooks(logoutSuccessHooks, w, r); err != nil {
+		if err := runSimpleHooks(logoutSuccessHooks, w, r); err != nil {
 			responseJSON = response.Status(ErrInternalServer, response.StatusError)
 		} else {
 			responseJSON = response.Status(LogoutSuccess, response.StatusSuccess)
@@ -145,7 +145,7 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 
 	status, statusType = register(credentials)
 	if statusType == response.StatusSuccess {
-		if err := runHooks(registerSuccessHooks, w, r); err != nil {
+		if err := runHooks(registerSuccessHooks, w, r, credentials); err != nil {
 			status = ErrInternalServer
 			statusType = response.StatusError
 		}
