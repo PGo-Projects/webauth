@@ -78,6 +78,13 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 
 	status, statusType = authenticate(credentials)
 	if statusType == response.StatusSuccess {
+		if err := runHooks(loginSuccessHooks, w, r); err != nil {
+			status = ErrInternalServer
+			statusType = response.StatusError
+		}
+	}
+
+	if statusType == response.StatusSuccess {
 		status, statusType = addAuthCookie(r, w, credentials.Username)
 	}
 
@@ -112,7 +119,11 @@ func LogoutHandler(w http.ResponseWriter, r *http.Request) {
 		output.DebugError(debugMode, err)
 		responseJSON = response.Status(ErrInternalServer, response.StatusError)
 	} else {
-		responseJSON = response.Status(LogoutSuccess, response.StatusSuccess)
+		if err := runHooks(logoutSuccessHooks, w, r); err != nil {
+			responseJSON = response.Status(ErrInternalServer, response.StatusError)
+		} else {
+			responseJSON = response.Status(LogoutSuccess, response.StatusSuccess)
+		}
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -133,6 +144,13 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	status, statusType = register(credentials)
+	if statusType == response.StatusSuccess {
+		if err := runHooks(registerSuccessHooks, w, r); err != nil {
+			status = ErrInternalServer
+			statusType = response.StatusError
+		}
+	}
+
 	responseJSON := response.Status(status, statusType)
 
 	w.Header().Set("Content-Type", "application/json")
