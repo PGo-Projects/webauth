@@ -25,6 +25,11 @@ var (
 
 	debugMode = false
 
+	RegisterRoute   = "/register"
+	LoginRoute      = "/login"
+	LogoutRotue     = "/logout"
+	IsLoggedInRoute = "/is_logged_in"
+
 	SessionOptions = sessions.Options{
 		Path:     "/",
 		HttpOnly: true,
@@ -56,11 +61,11 @@ func SetupSessions(authenticationKey []byte, encryptionKey []byte) {
 }
 
 func RegisterEndPoints(mux *chi.Mux) {
-	mux.MethodFunc(http.MethodPost, "/login", LoginHandler)
-	mux.MethodFunc(http.MethodPost, "/logout", LogoutHandler)
-	mux.MethodFunc(http.MethodPost, "/register", RegisterHandler)
+	mux.MethodFunc(http.MethodPost, LoginRoute, LoginHandler)
+	mux.MethodFunc(http.MethodPost, LogoutRotue, LogoutHandler)
+	mux.MethodFunc(http.MethodPost, RegisterRoute, RegisterHandler)
 
-	mux.MethodFunc(http.MethodGet, "/is_logged_in", IsLoggedInHandler)
+	mux.MethodFunc(http.MethodGet, IsLoggedInRoute, IsLoggedInHandler)
 }
 
 func LoginHandler(w http.ResponseWriter, r *http.Request) {
