@@ -7,7 +7,7 @@ import (
 
 	"github.com/PGo-Projects/output"
 	"github.com/PGo-Projects/webauth/internal/passhash"
-	"github.com/PGo-Projects/webauth/internal/response"
+	response "github.com/PGo-Projects/webresponse"
 	"github.com/go-chi/chi"
 	"github.com/gorilla/sessions"
 )
@@ -88,7 +88,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		status, statusType = addAuthCookie(r, w, credentials.Username)
 	}
 
-	var responseJSON string
+	var responseJSON []byte
 	if statusType == response.StatusSuccess {
 		responseJSON = response.General(map[string]string{
 			"status":     status,
@@ -102,33 +102,33 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte(responseJSON))
+	w.Write(responseJSON)
 }
 
 func LogoutHandler(w http.ResponseWriter, r *http.Request) {
-	var responseJSON string
+	var responseJSON []byte
 
 	session, err := store.Get(r, "auth")
 	if err != nil {
 		output.DebugError(debugMode, err)
-		responseJSON = response.Status(ErrInternalServer, response.StatusError)
+		responseJSON = response.Error(response.ErrInternalServer)
 	}
 
 	session.Options.MaxAge = -1
 	if err = session.Save(r, w); err != nil {
 		output.DebugError(debugMode, err)
-		responseJSON = response.Status(ErrInternalServer, response.StatusError)
+		responseJSON = response.Error(response.ErrInternalServer)
 	} else {
 		if err := runSimpleHooks(logoutSuccessHooks, w, r); err != nil {
-			responseJSON = response.Status(ErrInternalServer, response.StatusError)
+			responseJSON = response.Error(response.ErrInternalServer)
 		} else {
-			responseJSON = response.Status(LogoutSuccess, response.StatusSuccess)
+			responseJSON = response.Success(LogoutSuccess)
 		}
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte(responseJSON))
+	w.Write(responseJSON)
 }
 
 func RegisterHandler(w http.ResponseWriter, r *http.Request) {
