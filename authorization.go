@@ -7,12 +7,21 @@ import (
 
 	"github.com/PGo-Projects/output"
 	response "github.com/PGo-Projects/webresponse"
+	"github.com/go-chi/chi"
 )
 
-var permissionTable map[string][]string
+var (
+	permissionTable map[string][]string
+
+	IsAuthorizedRoute = "/is_authorized"
+)
 
 type authorizationURL struct {
 	Path string `json:"path"`
+}
+
+func RegisterAuthorizedRoute(mux *chi.Mux) {
+	mux.MethodFunc(http.MethodPost, IsAuthorizedRoute, IsAuthorizedHandler)
 }
 
 func RegisterPermissionTable(table map[string][]string) {

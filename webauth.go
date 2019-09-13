@@ -26,11 +26,10 @@ var (
 	authCookie = "auth"
 	debugMode  = false
 
-	RegisterRoute     = "/register"
-	LoginRoute        = "/login"
-	LogoutRotue       = "/logout"
-	IsLoggedInRoute   = "/is_logged_in"
-	IsAuthorizedRoute = "/is_authorized"
+	RegisterRoute   = "/register"
+	LoginRoute      = "/login"
+	LogoutRotue     = "/logout"
+	IsLoggedInRoute = "/is_logged_in"
 
 	SessionOptions = sessions.Options{
 		Path:     "/",
