@@ -68,7 +68,7 @@ func RegisterEndPoints(mux *chi.Mux) {
 	mux.MethodFunc(http.MethodPost, RegisterRoute, RegisterHandler)
 
 	mux.MethodFunc(http.MethodGet, IsLoggedInRoute, IsLoggedInHandler)
-	mux.MethodFunc(http.MethodGet, IsAuthorizedRoute, IsAuthorizedHandler)
+	mux.MethodFunc(http.MethodPost, IsAuthorizedRoute, IsAuthorizedHandler)
 }
 
 func LoginHandler(w http.ResponseWriter, r *http.Request) {
