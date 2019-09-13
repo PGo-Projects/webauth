@@ -20,7 +20,7 @@ type authorizationURL struct {
 	Path string `json:"path"`
 }
 
-func RegisterAuthorizedRoute(mux *chi.Mux) {
+func RegisterAuthorizedEndpoints(mux *chi.Mux) {
 	mux.MethodFunc(http.MethodPost, IsAuthorizedRoute, IsAuthorizedHandler)
 }
 
