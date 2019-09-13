@@ -26,10 +26,11 @@ var (
 	authCookie = "auth"
 	debugMode  = false
 
-	RegisterRoute   = "/register"
-	LoginRoute      = "/login"
-	LogoutRotue     = "/logout"
-	IsLoggedInRoute = "/is_logged_in"
+	RegisterRoute     = "/register"
+	LoginRoute        = "/login"
+	LogoutRotue       = "/logout"
+	IsLoggedInRoute   = "/is_logged_in"
+	IsAuthorizedRoute = "/is_authorized"
 
 	SessionOptions = sessions.Options{
 		Path:     "/",
@@ -67,6 +68,7 @@ func RegisterEndPoints(mux *chi.Mux) {
 	mux.MethodFunc(http.MethodPost, RegisterRoute, RegisterHandler)
 
 	mux.MethodFunc(http.MethodGet, IsLoggedInRoute, IsLoggedInHandler)
+	mux.MethodFunc(http.MethodGet, IsAuthorizedRoute, IsAuthorizedHandler)
 }
 
 func LoginHandler(w http.ResponseWriter, r *http.Request) {
@@ -176,10 +178,6 @@ func IsLoggedInHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(responseJSON))
 }
 
-func IsAuthorized(username, role string) bool {
-	return GetUserRole(username) == role
-}
-
 func IsLoggedIn(r *http.Request) (string, bool) {
 	session, err := store.Get(r, authCookie)
 	if err != nil {
@@ -191,17 +189,6 @@ func IsLoggedIn(r *http.Request) (string, bool) {
 		return username.(string), ok
 	}
 	return "", false
-}
-
-func GetUserRole(username string) string {
-	c := Credentials{
-		Username: username,
-	}
-	dbCredentials, err := retrieveCredentialsFromDB(c)
-	if err != nil {
-		return ""
-	}
-	return dbCredentials.Role
 }
 
 func authenticate(credentials Credentials) (status, statusType string) {
