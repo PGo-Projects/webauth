@@ -175,6 +175,10 @@ func IsLoggedInHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(responseJSON))
 }
 
+func IsAuthorized(username, role string) bool {
+	return GetUserRole(username) == role
+}
+
 func IsLoggedIn(r *http.Request) (string, bool) {
 	session, err := store.Get(r, "auth")
 	if err != nil {
@@ -186,6 +190,17 @@ func IsLoggedIn(r *http.Request) (string, bool) {
 		return username.(string), ok
 	}
 	return "", false
+}
+
+func GetUserRole(username string) string {
+	c := Credentials{
+		Username: username,
+	}
+	dbCredentials, err := retrieveCredentialsFromDB(c)
+	if err != nil {
+		return ""
+	}
+	return dbCredentials.Role
 }
 
 func authenticate(credentials Credentials) (status, statusType string) {
