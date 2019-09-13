@@ -23,7 +23,8 @@ var (
 	database Database
 	store    *sessions.CookieStore
 
-	debugMode = false
+	authCookie = "auth"
+	debugMode  = false
 
 	RegisterRoute   = "/register"
 	LoginRoute      = "/login"
@@ -113,7 +114,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 func LogoutHandler(w http.ResponseWriter, r *http.Request) {
 	var responseJSON []byte
 
-	session, err := store.Get(r, "auth")
+	session, err := store.Get(r, authCookie)
 	if err != nil {
 		output.DebugErrorln(debugMode, err)
 		responseJSON = response.Error(response.ErrInternalServer)
@@ -180,7 +181,7 @@ func IsAuthorized(username, role string) bool {
 }
 
 func IsLoggedIn(r *http.Request) (string, bool) {
-	session, err := store.Get(r, "auth")
+	session, err := store.Get(r, authCookie)
 	if err != nil {
 		output.DebugErrorln(debugMode, err)
 		return "", false
@@ -245,7 +246,7 @@ func register(credentials Credentials) (status, statusType string) {
 }
 
 func addAuthCookie(r *http.Request, w http.ResponseWriter, username string) (status, statusType string) {
-	session, err := store.Get(r, "auth")
+	session, err := store.Get(r, authCookie)
 	if err != nil {
 		output.DebugErrorln(debugMode, err)
 		return ErrInternalServer, response.StatusError
