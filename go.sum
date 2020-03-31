@@ -1,5 +1,5 @@
-github.com/PGo-Projects/output v0.0.0-20190826023914-73e670db3489 h1:PipAUin3fiVRUDwdC69K0i2J5nl1waR380lIgz3ACNw=
-github.com/PGo-Projects/output v0.0.0-20190826023914-73e670db3489/go.mod h1:akrObvIsWXqUYAV6wblIsHZO9P3gLDmVU/ENdmsR4y8=
+github.com/PGo-Projects/output v0.0.0-20200331004504-59c843518d91 h1:LQeHJJPcKmSziNu/G7YsjNWvv+Xatpjxtc/y+hUJBjM=
+github.com/PGo-Projects/output v0.0.0-20200331004504-59c843518d91/go.mod h1:akrObvIsWXqUYAV6wblIsHZO9P3gLDmVU/ENdmsR4y8=
 github.com/PGo-Projects/webresponse v0.0.0-20190723191328-050041f2f8ba h1:KDTlFbNTWlU4GYVvq1rgXrxYUeW2TJ49RYxbzMpB/88=
 github.com/PGo-Projects/webresponse v0.0.0-20190723191328-050041f2f8ba/go.mod h1:RCzVMXANBIAchhlgSdGwHzA094cQ57xoITtSsA1dIZE=
 github.com/buger/goterm v0.0.0-20181115115552-c206103e1f37 h1:uxxtrnACqI9zK4ENDMf0WpXfUsHP5V8liuq5QdgDISU=

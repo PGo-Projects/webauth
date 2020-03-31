@@ -35,7 +35,7 @@ func IsAuthorizedHandler(w http.ResponseWriter, r *http.Request) {
 	decoder := json.NewDecoder(r.Body)
 	err := decoder.Decode(&authURL)
 	if err != nil {
-		output.DebugErrorln(debugMode, err)
+		output.DebugErrorln(err)
 		responseJSON = response.Error(response.ErrBadRequest)
 	} else {
 		authorized := false

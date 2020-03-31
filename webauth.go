@@ -24,7 +24,6 @@ var (
 	store    *sessions.CookieStore
 
 	authCookie = "auth"
-	debugMode  = false
 
 	RegisterRoute   = "/register"
 	LoginRoute      = "/login"
@@ -54,7 +53,7 @@ func RegisterDatabase(db Database) {
 }
 
 func SetDebugMode(dm bool) {
-	debugMode = dm
+	output.DEBUG = dm
 }
 
 func SetupSessions(authenticationKey []byte, encryptionKey []byte) {
@@ -78,7 +77,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	decoder := json.NewDecoder(r.Body)
 	err := decoder.Decode(&credentials)
 	if err != nil {
-		output.DebugErrorln(debugMode, err)
+		output.DebugErrorln(err)
 		status = ErrInternalServer
 		statusType = response.StatusError
 	}
@@ -117,13 +116,13 @@ func LogoutHandler(w http.ResponseWriter, r *http.Request) {
 
 	session, err := store.Get(r, authCookie)
 	if err != nil {
-		output.DebugErrorln(debugMode, err)
+		output.DebugErrorln(err)
 		responseJSON = response.Error(response.ErrInternalServer)
 	}
 
 	session.Options.MaxAge = -1
 	if err = session.Save(r, w); err != nil {
-		output.DebugErrorln(debugMode, err)
+		output.DebugErrorln(err)
 		responseJSON = response.Error(response.ErrInternalServer)
 	} else {
 		if err := runSimpleHooks(logoutSuccessHooks, w, r); err != nil {
@@ -145,7 +144,7 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 
 	decoder := json.NewDecoder(r.Body)
 	if err := decoder.Decode(&credentials); err != nil {
-		output.DebugErrorln(debugMode, err)
+		output.DebugErrorln(err)
 		status = ErrInternalServer
 		statusType = response.StatusError
 	}
@@ -180,7 +179,7 @@ func IsLoggedInHandler(w http.ResponseWriter, r *http.Request) {
 func IsLoggedIn(r *http.Request) (string, bool) {
 	session, err := store.Get(r, authCookie)
 	if err != nil {
-		output.DebugErrorln(debugMode, err)
+		output.DebugErrorln(err)
 		return "", false
 	}
 	username, ok := session.Values["username"]
@@ -193,18 +192,18 @@ func IsLoggedIn(r *http.Request) (string, bool) {
 func authenticate(credentials Credentials) (status, statusType string) {
 	dbCredentials, err := retrieveCredentialsFromDB(credentials)
 	if err != nil {
-		output.DebugErrorln(debugMode, err)
+		output.DebugErrorln(err)
 		return ErrInvalidCredentials, response.StatusError
 	}
 
 	matches, err := passhash.Verify(credentials.Password, dbCredentials.Password)
 	if err != nil {
-		output.DebugErrorln(debugMode, err)
+		output.DebugErrorln(err)
 		return ErrInternalServer, response.StatusError
 	}
 
 	if !matches {
-		output.DebugStringln(debugMode, "The credentials don't match", output.RED)
+		output.DebugStringln("The credentials don't match", output.RED)
 		return ErrInvalidCredentials, response.StatusError
 	}
 
@@ -213,19 +212,19 @@ func authenticate(credentials Credentials) (status, statusType string) {
 
 func register(credentials Credentials) (status, statusType string) {
 	if _, err := database.FindOne(credentials); err == nil {
-		output.DebugStringln(debugMode, "The username already exists", output.RED)
+		output.DebugStringln("The username already exists", output.RED)
 		return ErrUsernameAlreadyExists, response.StatusError
 	}
 
 	hashedPassword, err := passhash.Hash(credentials.Password)
 	if err != nil {
-		output.DebugErrorln(debugMode, err)
+		output.DebugErrorln(err)
 		return ErrInternalServer, response.StatusError
 	}
 
 	credentials.Password = hashedPassword
 	if err := database.InsertOne(credentials); err != nil {
-		output.DebugErrorln(debugMode, err)
+		output.DebugErrorln(err)
 		return ErrInternalServer, response.StatusError
 	}
 	return RegisterSuccess, response.StatusSuccess
@@ -234,14 +233,14 @@ func register(credentials Credentials) (status, statusType string) {
 func addAuthCookie(r *http.Request, w http.ResponseWriter, username string) (status, statusType string) {
 	session, err := store.Get(r, authCookie)
 	if err != nil {
-		output.DebugErrorln(debugMode, err)
+		output.DebugErrorln(err)
 		return ErrInternalServer, response.StatusError
 	}
 
 	session.Values["username"] = username
 	session.Options = &SessionOptions
 	if err = session.Save(r, w); err != nil {
-		output.DebugErrorln(debugMode, err)
+		output.DebugErrorln(err)
 		return ErrInternalServer, response.StatusError
 	}
 	return LoginSuccess, response.StatusSuccess
@@ -250,7 +249,7 @@ func addAuthCookie(r *http.Request, w http.ResponseWriter, username string) (sta
 func retrieveCredentialsFromDB(credentials Credentials) (Credentials, error) {
 	entry, err := database.FindOne(credentials)
 	if err != nil {
-		output.DebugErrorln(debugMode, err)
+		output.DebugErrorln(err)
 		return Credentials{}, err
 	}
 	return entry.(Credentials), nil
