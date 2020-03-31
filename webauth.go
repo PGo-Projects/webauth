@@ -35,6 +35,7 @@ var (
 		HttpOnly: true,
 		Secure:   true,
 		MaxAge:   0,
+		SameSite: http.SameSiteStrictMode,
 	}
 )
 
@@ -58,6 +59,7 @@ func SetDebugMode(dm bool) {
 
 func SetupSessions(authenticationKey []byte, encryptionKey []byte) {
 	store = sessions.NewCookieStore(authenticationKey, encryptionKey)
+	store.Options = &SessionOptions
 }
 
 func RegisterEndPoints(mux *chi.Mux) {
@@ -238,7 +240,6 @@ func addAuthCookie(r *http.Request, w http.ResponseWriter, username string) (sta
 	}
 
 	session.Values["username"] = username
-	session.Options = &SessionOptions
 	if err = session.Save(r, w); err != nil {
 		output.DebugErrorln(err)
 		return ErrInternalServer, response.StatusError
